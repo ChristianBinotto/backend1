@@ -1,7 +1,6 @@
 const { joi } = require('./plugins/expressValidator')
 
 const addProductsSchema = joi.object({
-    id: joi.number().required(),
     title: joi.string().required(),
     description: joi.string().required(),
     code: joi.string().required(),
@@ -25,14 +24,9 @@ const updateProductsSchema = joi.object({
 })
 
 const addCartsSchema = joi.object({
-    id: joi.number().required(),
     products: joi.array().required()
 })
 
-/*const addProdToCart = joi.object({
-    id: joi.number().required(),
-    productId: joi.number().required()
-})*/
 
 module.exports = {
     addProductsSchema,

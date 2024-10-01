@@ -8,23 +8,24 @@ async function addProducts(req, res){
     if(error)
         return res.status(400).send(error);
 
-    const id = req.body.id
 
     try{
         let products = await fs.promises.readFile('files/products.json', 'utf8')
-        products = JSON.parse(products)
         if(products){
-            const index = _.findIndex(products, (product) => product.id === id)
+            products = JSON.parse(products)
+            const maxId = Math.max(...products.map(product => product.id));
+            const existeId = products.some(product => product.id === maxId+1)
             
-            if(index > -1){
-                res.status(400).send({ message: "El Producto ya existe"})
+            if(existeId){
+                res.status(400).send({ error: "El producto ya existe" })
             }
             else{
+                req.body.id = maxId + 1
                 products.push(req.body)
                 products = JSON.stringify(products)
                 try{
                     await fs.promises.writeFile('files/products.json', products)
-                    res.status(200).json(products)    
+                    res.status(200).send({ message: 'OK' })
                 }
                 catch(e){
                     res.status(400).send({message: err.message})
@@ -32,11 +33,12 @@ async function addProducts(req, res){
             }
         }
         else{
-            const products = [req.body]
+            req.body.id = 1
+            let products = [req.body]
             products = JSON.stringify(products)
             try{
-                let resultado = await fs.promises.writeFile('files/products.json', products)
-                res.status(200).json(resultado)
+                await fs.promises.writeFile('files/products.json', products)
+                res.status(200).send({ message: 'OK' })
             }
             catch(err){
                 res.status(400).send({message: err.message})
@@ -81,7 +83,7 @@ async function getProductsById(req, res){
             res.status(400).send({message: "Producto no encontrado"})
     }
     catch(e){
-        res.status(400).send({message: err.message})
+        res.status(400).send({message: e.message})
     }
 }
 
@@ -95,7 +97,7 @@ async function updateProducts(req, res){
         let products = await fs.promises.readFile('files/products.json', 'utf8')
         products = JSON.parse(products)
         const index = _.findIndex(products, (product) => product.id === id)
-    
+        
         if(index > -1){
             products[index] = req.body
             products = JSON.stringify(products)
