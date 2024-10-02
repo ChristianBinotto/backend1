@@ -53,6 +53,9 @@ async function addProducts(req, res){
 async function getProducts(req, res){
     try{
         let products = await fs.promises.readFile('files/products.json', 'utf8')
+        if(!products)
+            return res.status(404).send({message: 'El archivo está vacío'})
+
         products = JSON.parse(products)
         
         if(products.length > 0){
@@ -72,6 +75,10 @@ async function getProductsById(req, res){
     const id = parseInt(req.params.pid)
     try{
         let products = await fs.promises.readFile('files/products.json', 'utf8')
+
+        if(!products)
+            return res.status(404).send({message: 'El archivo está vacío'})
+        
         products = JSON.parse(products)
         const index = _.findIndex(products, (product) => product.id === id)
     

@@ -57,6 +57,10 @@ async function getCartsById(req, res){
     const id = parseInt(req.params.cid)
     try{
         let carts = await fs.promises.readFile('files/carts.json', 'utf8')
+
+        if(!carts)
+            return res.status(404).send({message: 'El archivo está vacío'})
+        
         carts = JSON.parse(carts)
         const index = _.findIndex(carts, (cart) => cart.id === id)
     
