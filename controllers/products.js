@@ -1,13 +1,16 @@
 const fs = require('fs')
 const _ = require('lodash')
+//const socketServer = require('../index')
 const { addProductsSchema, updateProductsSchema } = require('../expressValidator')
+
 
 
 async function addProducts(req, res){
     const { error } = addProductsSchema.validate(req.body)
     if(error)
         return res.status(400).send(error);
-
+    
+    const socketServer = req.app.get('socketServer');
 
     try{
         let products = await fs.promises.readFile('files/products.json', 'utf8')
@@ -25,10 +28,11 @@ async function addProducts(req, res){
                 products = JSON.stringify(products)
                 try{
                     await fs.promises.writeFile('files/products.json', products)
-                    res.status(200).send({ message: 'OK' })
+                    socketServer.emit('productAdded', req.body)
+                    res.status(200).send({message: 'OK', product: req.body })
                 }
                 catch(e){
-                    res.status(400).send({message: err.message})
+                    res.status(400).send({message: e.message})
                 }
             }
         }
@@ -38,7 +42,7 @@ async function addProducts(req, res){
             products = JSON.stringify(products)
             try{
                 await fs.promises.writeFile('files/products.json', products)
-                res.status(200).send({ message: 'OK' })
+                res.status(200).send({ message: 'OK', product: req.body })
             }
             catch(err){
                 res.status(400).send({message: err.message})
@@ -54,20 +58,21 @@ async function getProducts(req, res){
     try{
         let products = await fs.promises.readFile('files/products.json', 'utf8')
         if(!products)
-            return res.status(404).send({message: 'El archivo está vacío'})
+            return res.status(404).render('home', 'El archivo está vacío')
 
         products = JSON.parse(products)
         
         if(products.length > 0){
             products = products.slice(0, 10 )
-            res.status(200).json({products: products})
+            
+            res.render('home', {products})
             return products
         }
         else
-            res.status(400).send({message: "No hay productos cargados"})
+            res.status(400).render('home', "No Hay Productos Cargados")
     }
     catch(e){
-        res.status(400).send({message: err.message})
+        res.status(400).render('home', e.message)
     }
 }
 
@@ -99,6 +104,7 @@ async function updateProducts(req, res){
     if(error)
         return res.status(400).send(error);
 
+    const socketServer = req.app.get('socketServer');
     const id = parseInt(req.params.pid)
     try{
         let products = await fs.promises.readFile('files/products.json', 'utf8')
@@ -109,6 +115,7 @@ async function updateProducts(req, res){
             products[index] = req.body
             products = JSON.stringify(products)
             await fs.promises.writeFile('files/products.json', products)
+            socketServer.emit('updateProduct', { index: index, product: req.body})
             res.status(200).send({message: 'OK'})
         }
         else
@@ -122,6 +129,8 @@ async function updateProducts(req, res){
 async function deleteProducts(req, res){
     const id = parseInt(req.params.pid)
 
+    const socketServer = req.app.get('socketServer');
+
     try{
         let products = await fs.promises.readFile('files/products.json', 'utf8')
         products = JSON.parse(products)
@@ -130,6 +139,7 @@ async function deleteProducts(req, res){
             products.splice(index, 1)
             products = JSON.stringify(products)
             await fs.promises.writeFile('files/products.json', products)
+            socketServer.emit('updateProduct', index)
             res.status(200).send({message: 'OK'})
         }
         else

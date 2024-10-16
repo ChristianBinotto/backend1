@@ -9,6 +9,7 @@ module.exports = {
         DELETE_PRODUCTS: '/products/:pid',
         ADD_CARTS: '/carts',
         GET_CARTS: '/carts/:cid',
-        ADD_PRODUCT_CARTS: '/carts/:cid/:pid'
+        ADD_PRODUCT_CARTS: '/carts/:cid/:pid',
+        VIEW_PRODUCTS: '/realtimeproducts',
     }
 }

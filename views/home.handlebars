@@ -1,0 +1,21 @@
+<div>
+    <h1>Hola!</h1>
+    {{#each products}}
+        <div>
+            <ul>
+                <li>Id: {{id}}</li>
+                <li>Título: {{title}}</li>
+                <li>Descripción: {{description}}</li>
+                <li>Código: {{code}}</li>
+                <li>Precio: {{price}}</li>
+                {{#if status}}
+                    <li>Stock: {{stock}}</li>
+
+                {{else}}
+                    <li>No Hay Stock!</li>
+                {{/if}}
+                <li>Categoría: {{category}}</li>
+            </ul>
+        </div>
+    {{/each}}
+</div>
