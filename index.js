@@ -31,12 +31,5 @@ socketServer.on('connection', socket =>{
     socket.on('message', data=>{
         console.log("Servidor: ", data)
     })
-    
-    const updateProducts = async () => {
-        const content = await fs.promises.readFile("files/products.json", "utf-8");
-        const products = JSON.parse(content);
-        socketServer.emit('productUpdate', products);  
-    };
-    
-    updateProducts();
+        
 })

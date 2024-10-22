@@ -25,10 +25,10 @@ async function addProducts(req, res){
             else{
                 req.body.id = maxId + 1
                 products.push(req.body)
+                socketServer.emit('productUpdated', products)
                 products = JSON.stringify(products)
                 try{
                     await fs.promises.writeFile('files/products.json', products)
-                    socketServer.emit('productAdded', req.body)
                     res.status(200).send({message: 'OK', product: req.body })
                 }
                 catch(e){
@@ -39,6 +39,7 @@ async function addProducts(req, res){
         else{
             req.body.id = 1
             let products = [req.body]
+            socketServer.emit('productUpdated', products)
             products = JSON.stringify(products)
             try{
                 await fs.promises.writeFile('files/products.json', products)
@@ -113,9 +114,9 @@ async function updateProducts(req, res){
         
         if(index > -1){
             products[index] = req.body
+            socketServer.emit('productUpdated', products)
             products = JSON.stringify(products)
             await fs.promises.writeFile('files/products.json', products)
-            socketServer.emit('updateProduct', { index: index, product: req.body})
             res.status(200).send({message: 'OK'})
         }
         else
@@ -137,9 +138,9 @@ async function deleteProducts(req, res){
         const index = _.findIndex(products, (product) => product.id === id)
         if(index > -1){
             products.splice(index, 1)
+            socketServer.emit('productUpdated', products)
             products = JSON.stringify(products)
             await fs.promises.writeFile('files/products.json', products)
-            socketServer.emit('updateProduct', index)
             res.status(200).send({message: 'OK'})
         }
         else

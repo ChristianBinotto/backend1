@@ -30,24 +30,24 @@
     <button type="submit">Enviar</button>
 </form>-->
 
-    {{#each products}}
         <div>
             <ul id="products">
-                <li>Id: {{id}}</li>
-                    <p>Título: {{title}}</p>
-                    <p>Descripción: {{description}}</p>
-                    <p>Código: {{code}}</p>
-                    <p>Precio: {{price}}</p>
-                    {{#if status}}
-                        <p>Stock: {{stock}}</p>
+                {{#each products}}
+                    <li>Id: {{id}}</li>
+                        <p>Título: {{title}}</p>
+                        <p>Descripción: {{description}}</p>
+                        <p>Código: {{code}}</p>
+                        <p>Precio: {{price}}</p>
+                        {{#if status}}
+                            <p>Stock: {{stock}}</p>
 
-                    {{else}}
-                        <p>No Hay Stock!</p>
-                    {{/if}}
-                    <p>Categoría: {{category}}</p>
+                        {{else}}
+                            <p>No Hay Stock!</p>
+                        {{/if}}
+                        <p>Categoría: {{category}}</p>
+                {{/each}}
             </ul>
         </div>
-    {{/each}}
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
@@ -57,36 +57,24 @@
         socket.emit('message', 'Hola!')
     }) 
     
-    socket.on('productAdded', data => {
+    socket.on('productUpdated', data => {
             const products = document.getElementById('products')
             products.innerHTML = ''
-            const maxId = Math.max(...products.map(product => product.id));
-            //products.forEach(product => {
+            console.log(data)
+            data.forEach(product => {
                 const listItem = document.createElement('li');
                 listItem.innerHTML = `
-                    <p>Id: ${maxId+1}</p>
-                    <p>Título: ${data.title}</p>
-                    <p>Descripción: ${data.description}</p>
-                    <p>Código: ${data.description}</p>
-                    <p>Precio: $${data.price}</p>
-                    <p>Stock: ${data.stock}</p>
-                    <p>Categoría: ${data.category}</p>
+                    <p>Id: ${product.id}</p>
+                    <p>Título: ${product.title}</p>
+                    <p>Descripción: ${product.description}</p>
+                    <p>Código: ${product.description}</p>
+                    <p>Precio: $${product.price}</p>
+                    <p>Stock: ${product.stock}</p>
+                    <p>Categoría: ${product.category}</p>
                 `
                 products.appendChild(listItem);
-            //})
+            })
         })
-
-    socket.on('updateProduct', data => {
-        const products = document.getElementById('products')
-        products.innerHTML = ''
-        products[data.index] = data.product
-    })
-
-    socket.on('deleteProduct', data => {
-        const products = document.getElementById('products')
-        products.innerHTML = ''
-        products.splice(data, 1)
-    })
 
 </script>
 
