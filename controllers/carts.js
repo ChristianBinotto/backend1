@@ -1,6 +1,7 @@
 const fs = require('fs')
 const { addCartsSchema } = require('../expressValidator')
 const _ = require('lodash')
+const cartSchema = require('../models/cart')
 
 async function addCarts(req, res){
     const { error } = addCartsSchema.validate(req.body)

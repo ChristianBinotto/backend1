@@ -2,8 +2,7 @@ const fs = require('fs')
 const _ = require('lodash')
 //const socketServer = require('../index')
 const { addProductsSchema, updateProductsSchema } = require('../expressValidator')
-
-
+const productModel = require('../models/product')
 
 async function addProducts(req, res){
     const { error } = addProductsSchema.validate(req.body)
