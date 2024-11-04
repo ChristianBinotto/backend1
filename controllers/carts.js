@@ -1,7 +1,7 @@
 const fs = require('fs')
 const { addCartsSchema } = require('../expressValidator')
 const _ = require('lodash')
-const cartSchema = require('../models/cart')
+const Cart = require('../models/cart')
 
 async function addCarts(req, res){
     const { error } = addCartsSchema.validate(req.body)
@@ -120,8 +120,68 @@ async function addProdToCart(req, res){
     }
 }
 
+    async function deleteProdFromCart(req, res) {
+        const cid = parseInt(req.params.cid)
+        const pid = parseInt(req.params.pid)
+
+        try{
+            const result = await Cart.deleteOne({idC: cid, idP: pid})
+            res.status(200).send({origin: result.origin, payload: result.payload})
+        } catch(error){
+            console.log(error)
+            res.status(500).send({origin: "Error al eliminar el producto"})
+        }
+    }
+
+async function deleteCart(req, res) {
+    const cid = parseInt(req.params.cid)
+
+    try{
+        const result = await Cart.deleteMany({idC: cid})
+        res.status(200).send({origin: result.origin, payload: result.payload})
+    } catch(error){
+        console.log(error)
+        res.status(500).send({origin: "Error al eliminar los productos"})
+    }
+}
+
+async function updateCart(req, res) {
+    const cid = parseInt(req.body.cid)
+    const newProducts = req.body.products
+    try{
+        const updatedCart = await Cart.findByIdAndUpdate(
+            cid,
+            { $set: { products: newProducts } },
+            { new: true }
+          )
+        response.status(200).send({response: updatedCart})
+    } catch(error){
+        res.status(500).send({origin: "Error al actualizar el carrito"})
+    }
+}
+
+async function updateProductFromCart(req, res){
+    const quantity = req.body.quantity
+    const { cid, pid } = req.params
+
+    try{
+        const updatedCart = await Cart.findOneAndUpdate(
+            { _id: cid, "products.productId": pid },
+            { $set: { "products.$.quantity": quantity } },
+            { new: true }
+          )
+        res.status(200).send({ response: updatedCart})
+    } catch(error){
+        res.status(500).send({ response: error.message })
+    }
+}
+
 module.exports = {
     addCarts,
     getCartsById,
-    addProdToCart
+    addProdToCart,
+    deleteProdFromCart,
+    deleteCart,
+    updateCart,
+    updateProductFromCart
 }

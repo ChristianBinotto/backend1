@@ -15,12 +15,14 @@ const httpServer = app.listen('8080', () => {
 })
 const socketServer = new Server(httpServer)
 
-mongoose.connect('mongodb+srv://christianbinotto:<db_password>@cluster0.z011g.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0', (error) => {
-    if(error){
+try{
+    mongoose.connect('mongodb+srv://christianbinotto:Tequierocade1!@cluster0.z011g.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
+    console.log("Conexión a base de datos")
+    }    
+    catch(error){    
         console.log("No se puede conectar a la base de datos: " + error)
         process.exit()
     }
-})
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json())

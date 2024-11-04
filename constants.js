@@ -10,6 +10,10 @@ module.exports = {
         ADD_CARTS: '/carts',
         GET_CARTS: '/carts/:cid',
         ADD_PRODUCT_CARTS: '/carts/:cid/:pid',
+        DELETE_PRODUCT_CART: '/carts/:cid/:pid',
+        DELETE_PRODUCTS_CART: '/carts/:cid',
+        UPDATE_PRODUCTS_CART: '/carts/:cid',
+        UPDATE_PRODUCT_CART: '/carts/:cid/:pid',
         VIEW_PRODUCTS: '/realtimeproducts',
     }
 }

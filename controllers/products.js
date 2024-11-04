@@ -2,69 +2,100 @@ const fs = require('fs')
 const _ = require('lodash')
 //const socketServer = require('../index')
 const { addProductsSchema, updateProductsSchema } = require('../expressValidator')
-const productModel = require('../models/product')
+const Product = require('../models/product')
 
 async function addProducts(req, res){
     const { error } = addProductsSchema.validate(req.body)
     if(error)
         return res.status(400).send(error);
     
+    const { title, description, code, price, status, stock, category } = req.body
+
     const socketServer = req.app.get('socketServer');
 
     try{
-        let products = await fs.promises.readFile('files/products.json', 'utf8')
-        if(products){
-            products = JSON.parse(products)
-            const maxId = Math.max(...products.map(product => product.id));
-            const existeId = products.some(product => product.id === maxId+1)
-            
-            if(existeId){
-                res.status(400).send({ error: "El producto ya existe" })
+       const lastProduct = await Product.findOne().sort({ idB: -1 }).exec();
+       
+        if (lastProduct) {
+            const idB = lastProduct.idB + 1
+            try{
+                const response = await Product.create({
+                    idB,
+                    title,
+                    description,
+                    code,
+                    price,
+                    status,
+                    stock,
+                    category
+                })
+//              socketServer.emit('productUpdated', products)
+
+                res.status(200).send({message: 'OK', product: req.body })
             }
-            else{
-                req.body.id = maxId + 1
-                products.push(req.body)
-                socketServer.emit('productUpdated', products)
-                products = JSON.stringify(products)
-                try{
-                    await fs.promises.writeFile('files/products.json', products)
-                    res.status(200).send({message: 'OK', product: req.body })
-                }
-                catch(e){
-                    res.status(400).send({message: e.message})
-                }
+            catch(error) {
+                res.status(400).send({message: error.message})
+            }
+            
+        } else {
+            const idB = 1
+            try{
+                const response = await Product.create({
+                    idB,
+                    title,
+                    description,
+                    code,
+                    price,
+                    status,
+                    stock,
+                    category
+                })
+                //socketServer.emit('productUpdated', products)
+                res.status(200).send({message: 'OK', product: req.body })
+            }
+            catch(error) {
+                res.status(400).send({message: error.message})
             }
         }
-        else{
-            req.body.id = 1
-            let products = [req.body]
-            socketServer.emit('productUpdated', products)
-            products = JSON.stringify(products)
-            try{
-                await fs.promises.writeFile('files/products.json', products)
-                res.status(200).send({ message: 'OK', product: req.body })
-            }
-            catch(err){
-                res.status(400).send({message: err.message})
-            }
-        }    
     }
-    catch(err){
-        res.status(400).send({message: err.message})
+    catch(error) {
+        console.log(error);
     }
+        
+    
 }
 
 async function getProducts(req, res){
+    
+    const limit = parseInt(req.query.limit) || 10
+    const page = parseInt(req.query.page) || 1
+    const query = req.query.query ? req.query.query : {}
+    const sort = req.query.sort ? req.query.sort : {}
+
+   /* if(!limit)
+        limit = 10
+    else(Number.isNan(limit))
+        res.status(400).render('home', "Valor inválido en limit, debe ser un número")
+
+    if(!page)
+        page = 1
+    else(Number.isNan(page))
+        res.status(400).render('home', "Valor inválido en page, debe ser un número")
+
+    if(sort != "asc" && sort != "desc" && !sort)
+        res.status(400).render('home', "Valor inválido en sort, debe ser asc, desc o vacío")
+*/
     try{
-        let products = await fs.promises.readFile('files/products.json', 'utf8')
+        let products = await Product.find(query)
+        .limit(limit) 
+        .skip(page) 
+        .sort(sort) 
+        .lean()
+        console.log(products)
         if(!products)
             return res.status(404).render('home', 'El archivo está vacío')
-
-        products = JSON.parse(products)
         
         if(products.length > 0){
-            products = products.slice(0, 10 )
-            
             res.render('home', {products})
             return products
         }
