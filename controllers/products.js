@@ -1,8 +1,8 @@
 const fs = require('fs')
 const _ = require('lodash')
 //const socketServer = require('../index')
+const { getProducts, getProductsById, updateProducts, deleteProducts } = require('../services/bdQuerys')
 const { addProductsSchema, updateProductsSchema } = require('../expressValidator')
-const Product = require('../models/product')
 
 async function addProducts(req, res){
     const { error } = addProductsSchema.validate(req.body)
@@ -51,7 +51,7 @@ async function addProducts(req, res){
                     category
                 })
                 //socketServer.emit('productUpdated', products)
-                res.status(200).send({message: 'OK', product: req.body })
+                res.status(200).send({message: 'OK', product: response })
             }
             catch(error) {
                 res.status(400).send({message: error.message})
@@ -65,37 +65,18 @@ async function addProducts(req, res){
     
 }
 
-async function getProducts(req, res){
+async function checkProducts(req, res){
     
     const limit = parseInt(req.query.limit) || 10
     const page = parseInt(req.query.page) || 1
     const query = req.query.query ? req.query.query : {}
     const sort = req.query.sort ? req.query.sort : {}
 
-   /* if(!limit)
-        limit = 10
-    else(Number.isNan(limit))
-        res.status(400).render('home', "Valor inválido en limit, debe ser un número")
-
-    if(!page)
-        page = 1
-    else(Number.isNan(page))
-        res.status(400).render('home', "Valor inválido en page, debe ser un número")
-
-    if(sort != "asc" && sort != "desc" && !sort)
-        res.status(400).render('home', "Valor inválido en sort, debe ser asc, desc o vacío")
-*/
     try{
-        let products = await Product.find(query)
-        .limit(limit) 
-        .skip(page) 
-        .sort(sort) 
-        .lean()
+        const products = await getProducts(limit, page, sort, query)
         console.log(products)
-        if(!products)
-            return res.status(404).render('home', 'El archivo está vacío')
         
-        if(products.length > 0){
+        if(products){
             res.render('home', {products})
             return products
         }
@@ -107,30 +88,25 @@ async function getProducts(req, res){
     }
 }
 
-async function getProductsById(req, res){
+async function checkProductsById(req, res){
     const id = parseInt(req.params.pid)
     try{
-        let products = await fs.promises.readFile('files/products.json', 'utf8')
-
-        if(!products)
-            return res.status(404).send({message: 'El archivo está vacío'})
+        const product = await getProductsById(id)
+        console.log(product)
         
-        products = JSON.parse(products)
-        const index = _.findIndex(products, (product) => product.id === id)
-    
-        if(index > -1){
-            res.status(200).json({product: products[index]})
-            return products[index]
+        if(product){
+            res.render('home', {product})
+            return product
         }
         else
-            res.status(400).send({message: "Producto no encontrado"})
+            res.status(400).render('home', "No Existe el Producto Solicitado")
     }
     catch(e){
-        res.status(400).send({message: e.message})
+        res.status(400).render('home', e.message)
     }
 }
 
-async function updateProducts(req, res){
+async function changeProducts(req, res){
     const { error } = updateProductsSchema.validate(req.body)
     if(error)
         return res.status(400).send(error);
@@ -138,16 +114,10 @@ async function updateProducts(req, res){
     const socketServer = req.app.get('socketServer');
     const id = parseInt(req.params.pid)
     try{
-        let products = await fs.promises.readFile('files/products.json', 'utf8')
-        products = JSON.parse(products)
-        const index = _.findIndex(products, (product) => product.id === id)
+        let products = await updateProducts(id, req.body, true)
         
-        if(index > -1){
-            products[index] = req.body
-            socketServer.emit('productUpdated', products)
-            products = JSON.stringify(products)
-            await fs.promises.writeFile('files/products.json', products)
-            res.status(200).send({message: 'OK'})
+        if(products){
+            res.status(200).send({message: 'OK', reponse: products})
         }
         else
             res.status(400).send({message: "Producto no Encontrado"})
@@ -157,24 +127,19 @@ async function updateProducts(req, res){
     }
 }
 
-async function deleteProducts(req, res){
+async function eliminateProducts(req, res){
     const id = parseInt(req.params.pid)
 
     const socketServer = req.app.get('socketServer');
 
     try{
-        let products = await fs.promises.readFile('files/products.json', 'utf8')
-        products = JSON.parse(products)
-        const index = _.findIndex(products, (product) => product.id === id)
-        if(index > -1){
-            products.splice(index, 1)
-            socketServer.emit('productUpdated', products)
-            products = JSON.stringify(products)
-            await fs.promises.writeFile('files/products.json', products)
-            res.status(200).send({message: 'OK'})
+        let product = await deleteProducts(id)
+    
+        if(product){
+            res.status(200).send({message: 'OK', response: product})
         }
         else
-        res.status(400).send({message: "Producto no Encontrado"})
+            res.status(400).send({message: "Producto no Encontrado"})
     }
     catch(err){
         res.status(400).send({message: err.message})
@@ -183,8 +148,8 @@ async function deleteProducts(req, res){
 
 module.exports = {
     addProducts,
-    getProducts,
-    getProductsById,
-    updateProducts,
-    deleteProducts
+    checkProducts,
+    checkProductsById,
+    changeProducts,
+    eliminateProducts
 }
